@@ -20,8 +20,27 @@ Includes a) extended event listener options such as 'first', 'last' and 'unstopp
 1. [Pattern GuaranteedBubbleListener](14_Pattern_GuaranteedBubbleListener.md)
 1. [Pattern ImmediateOnlyEventListenerOption](15_Pattern_ImmediateOnlyEventListenerOption.md)
 
+## todo 
+
 x. make a chapter about the getEventListeners() method in Chrome dev tools.
 y. we need a discussion about the safety of the getEventListeners() method. 
 * functions can be retrieved from the dom elements. this means that there source can be printed. to avoid that, wrap them inside anoter function that calls them, or bind them.
 * hide the access to the getEventListeners method, do not make it available via the window object for example, but keep its reference locked inside your framework js files.
 
+## how to use it
+
+```javascript
+import {addEventTargetRegistry as addEventTargetRegistry1} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1/src/getEventListeners.js";
+import {addEventTargetRegistry as addEventTargetRegistry2} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1/src/getEventListeners_once.js";
+import {addEventTargetRegistry as addEventTargetRegistry3} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1/src/getEventListeners_once_last.js";
+import {addEventTargetRegistry} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1/src/getEventListeners_once_last_first.js";
+import {addEventListenerOptionScopedUnstoppable} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1/src/EventListenersOptionUnstoppableScoped.js";
+import {addEventIsStoppedScoped} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1/src/ScopedStopPropagation.js";
+
+const scopedByDefault = true;
+  
+const isStopped = addEventIsStoppedScoped(Event.prototype);
+addEventListenerOptionScopedUnstoppable(EventTarget.prototype, isStopped);
+scopedByDefault && Object.defineProperty(Event.prototype, "isScoped", {value: true});
+window.getEventListeners = addEventTargetRegistry(EventTarget.prototype);
+```
