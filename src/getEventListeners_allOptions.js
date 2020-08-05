@@ -5,14 +5,11 @@ import {addEventIsStoppedScoped} from "./ScopedStopPropagation.js";
 export function addGetEventListeners_allOptions(
   scopedByDefault,
   eventPrototype = Event.prototype,
-  eventTargetPrototype = EventTarget.prototype)
-{
+  eventTargetPrototype = EventTarget.prototype
+) {
   const isStopped = addEventIsStoppedScoped(eventPrototype);
   addEventListenerOptionScopedUnstoppable(eventTargetPrototype, isStopped);
   scopedByDefault && Object.defineProperty(eventPrototype, "isScoped", {value: true});
-  return {
-    getEventListeners: addEventTargetRegistry(eventTargetPrototype),
-    isStopped: isStopped
-  };
+  return {getEventListeners: addEventTargetRegistry(eventTargetPrototype), isStopped};
 }
 
