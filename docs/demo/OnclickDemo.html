@@ -1,0 +1,67 @@
+<h1>
+  <span>Click me twice!</span>
+</h1>
+
+<script>
+  function log1(e) {
+    console.log(e.type + " one");
+  }
+
+  function log2(e) {
+    console.log(e.type + " two");
+  }
+
+  function log3(e) {
+    console.log(e.type + " three");
+  }
+
+  function log4(e) {
+    console.log(e.type + " four");
+  }
+
+  function log5(e) {
+    console.log(e.type + " five");
+  }
+
+  const h1 = document.querySelector("h1");
+  const span = document.querySelector("span");
+
+  h1.addEventListener("click", log1);
+  h1.onclick = log1;
+  span.dispatchEvent(new MouseEvent("click", {bubbles: true}));
+  //click one
+  //click one
+  console.log("----------");
+
+  h1.addEventListener("dblclick", log1);
+  h1.ondblclick = log2;
+  h1.addEventListener("dblclick", log3);
+  span.dispatchEvent(new MouseEvent("dblclick", {bubbles: true}));
+  //click one
+  //click two
+  //click three
+  console.log("----------");
+
+  h1.addEventListener("mouseup", log1);
+  h1.onmouseup = log2;
+  h1.addEventListener("mouseup", log3);
+  h1.onmouseup = log4;
+  span.dispatchEvent(new MouseEvent("mouseup", {bubbles: true}));
+  //click one
+  //click four
+  //click three
+  console.log("----------");
+
+  h1.addEventListener("auxclick", log1);
+  h1.onauxclick = log2;
+  h1.addEventListener("auxclick", log3);
+  h1.onauxclick = undefined;
+  h1.addEventListener("auxclick", log4);
+  h1.onauxclick = log5;
+  span.dispatchEvent(new MouseEvent("auxclick", {bubbles: true}));
+  //click one
+  //click two
+  //click four
+  //click five
+  console.log("----------");
+</script>

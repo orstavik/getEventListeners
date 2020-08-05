@@ -1,0 +1,76 @@
+<script>
+  (function () {
+
+    const isStoppedSymbol = Symbol("isStoppedSymbol");
+    Object.defineProperties(Event.prototype, {
+      "isStopped": {
+        get: function () {
+          return (this[isStoppedSymbol] && this[isStoppedSymbol] !== this.currentTarget) || false;
+        }
+      },
+      "stopPropagation": {
+        value: function () {
+          this[isStoppedSymbol] || (this[isStoppedSymbol] = this.currentTarget);
+        }
+      },
+      "stopImmediatePropagation": {
+        value: function () {
+          this[isStoppedSymbol] = true;
+        }
+      }
+    });
+
+    // overriding the stopPropagation logic by wrapping all functions in wrapper method
+    // the weakMaps preserves all wrappers for the same function objects, so that the event listener functions appear
+    // for the underlying event propagation system similarly as before.
+    const cbToWrapperBubble = new WeakMap();
+    const cbToWrapperCapture = new WeakMap();
+
+    const ogAdd = EventTarget.prototype.addEventListener;
+    Object.defineProperty(EventTarget.prototype, "addEventListener", {
+      value: function (type, cb, options) {
+        const cbToWrapper = (!options || (options instanceof Object) && !options.capture) ?
+          cbToWrapperBubble :
+          cbToWrapperCapture;
+        let wrapper = cbToWrapper.get(cb);
+        if (!wrapper) {
+          wrapper = function (event) {
+            (!event.isStopped || options?.unstoppable) && cb(event);
+          };
+          cbToWrapper.set(cb, wrapper);
+        }
+        ogAdd.call(this, type, wrapper, options);
+      }
+    });
+  })();
+</script>
+
+<div id="a">
+  <div id="b">
+    <div id="c">
+      hello sunshine
+    </div>
+  </div>
+</div>
+
+<script>
+  const a = document.querySelector("#a");
+  const b = document.querySelector("#b");
+  const c = document.querySelector("#c");
+
+  function aOnce() {
+    console.log("five, this should be only once, at the end")
+  }
+
+  a.addEventListener("click", e => console.log("one"), true);
+  a.addEventListener("click", e => e.stopPropagation(), true);
+  a.addEventListener("click", e => console.log("two"), true);
+  a.addEventListener("click", e => e.stopImmediatePropagation(), true);
+  a.addEventListener("click", aOnce, true);
+  b.addEventListener("click", e => console.log("three"), {unstoppable: true, capture: true});
+  c.addEventListener("click", e => console.log("---"), {capture: true});
+
+  c.addEventListener("click", e => console.log("---"));
+  b.addEventListener("click", e => console.log("four"), {unstoppable: true});
+  a.addEventListener("click", aOnce, {unstoppable: true});
+</script>

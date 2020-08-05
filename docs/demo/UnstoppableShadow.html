@@ -1,0 +1,68 @@
+<script>
+  (function () {
+
+    const isStoppedSymbol = Symbol("isStoppedSymbol");
+    Object.defineProperties(Event.prototype, {
+      "isStopped": {
+        get: function () {
+          return (this[isStoppedSymbol] && this[isStoppedSymbol] !== this.currentTarget) || false;
+        }
+      },
+      "stopPropagation": {
+        value: function () {
+          this[isStoppedSymbol] || (this[isStoppedSymbol] = this.currentTarget);
+        }
+      },
+      "stopImmediatePropagation": {
+        value: function () {
+          this[isStoppedSymbol] = true;
+        }
+      }
+    });
+
+    // overriding the stopPropagation logic by wrapping all functions in wrapper method
+    // the weakMaps preserves all wrappers for the same function objects, so that the event listener functions appear
+    // for the underlying event propagation system similarly as before.
+    const cbToWrapperBubble = new WeakMap();
+    const cbToWrapperCapture = new WeakMap();
+
+    const ogAdd = EventTarget.prototype.addEventListener;
+    Object.defineProperty(EventTarget.prototype, "addEventListener", {
+      value: function (type, cb, options) {
+        const cbToWrapper = (!options || (options instanceof Object) && !options.capture) ?
+          cbToWrapperBubble :
+          cbToWrapperCapture;
+        let wrapper = cbToWrapper.get(cb);
+        if (!wrapper) {
+          wrapper = function (event) {
+            (!event.isStopped || options?.unstoppable) && cb(event);
+          };
+          cbToWrapper.set(cb, wrapper);
+        }
+        ogAdd.call(this, type, wrapper, options);
+      }
+    });
+  })();
+</script>
+
+
+<script>
+  class ClosedComp extends HTMLElement {
+    constructor() {
+      super();
+      const shadow = this.attachShadow({mode: "closed"});
+      shadow.innerHTML = `<div>Hello Sunshine</div>`;
+      shadow.children[0].addEventListener("click", e => console.log("unstoppable!!", e.composedPath()), {unstoppable: true});
+    }
+  }
+
+  customElements.define("closed-comp", ClosedComp);
+</script>
+<closed-comp></closed-comp>
+
+<script>
+  window.addEventListener("click", e => console.log("click began propagation.", e.composedPath()), true);
+  window.addEventListener("click", e => e.stopPropagation(), true);
+  window.addEventListener("click", e => console.log("click has stopped propagation.", e.composedPath()), true);
+  //unstoppable!! will be written out still
+</script>

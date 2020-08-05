@@ -1,0 +1,112 @@
+<script>
+  //target => "eventName"/"eventName capture" => {cb, options}
+  const targetTypeLast = new WeakMap();
+
+  function getLast(target, type, cb, options) {
+    const capture = options instanceof Object ? options.capture : !!options;
+    const lookupName = capture ? type + " capture" : type;
+    return targetTypeLast.get(target)?.get(lookupName);
+  }
+
+  function setLast(target, type, cb, options) {
+    const capture = options instanceof Object ? options.capture : !!options;
+    const lookupName = capture ? type + " capture" : type;
+    let targetsMap = targetTypeLast.get(target);
+    if (!targetsMap)
+      targetTypeLast.set(target, targetsMap = new Map());
+    if (options.once) {
+      const og = cb;
+      cb = function (e) {
+        targetsMap.delete(lookupName);
+        og.call(this, e);
+      };
+    }
+    targetsMap.set(lookupName, {cb, options});
+    return cb;
+  }
+
+  function addLastEventListenerOption(proto) {
+    const ogAdd = proto.addEventListener;
+    const ogRemove = proto.removeEventListener;
+    Object.defineProperties(proto, {
+      addEventListener: {
+        value: function (type, cb, options) {
+          const oldLast = getLast(this, type, cb, options);
+          if (options?.last && oldLast)
+            throw new Error("only one last event listener can be added to a target for an event type at a time.");
+          if (options?.last) {
+            cb = setLast(this, type, cb, options);
+            return ogAdd.call(this, type, cb, options);
+          }
+          if (oldLast) {
+            this.removeEventListener(type, oldLast.cb, oldLast.options);
+            const res = ogAdd.call(this, type, cb, options);
+            ogAdd.call(this, type, oldLast.cb, oldLast.options);
+            return res;
+          }
+          return ogAdd.call(this, type, cb, options);
+        }
+      },
+      removeEventListener: {
+        value: function (type, cb, options) {
+          cb = getLast(this, type, cb, options)?.cb || cb;
+          ogRemove.call(this, type, cb, options);
+        }
+      }
+    });
+  }
+
+  addLastEventListenerOption(EventTarget.prototype);
+</script>
+
+<h1>Hello Sunshine!</h1>
+<h2>Hello World!</h2>
+<h3>Hello double Error!</h3>
+
+<script>
+  const funkyBoy = e => console.log("if you see this log, there is a bug");
+
+  const h1 = document.querySelector("h1");
+  const h2 = document.querySelector("h2");
+  const h3 = document.querySelector("h3");
+
+  h1.addEventListener("click", e => console.log(e.currentTarget, "last"), {last: true});
+  h1.addEventListener("click", e => console.log(e.currentTarget, "normal"),);
+  h1.addEventListener("click", e => console.log(e.currentTarget, "normal capture"), true);
+  h1.addEventListener("click", e => console.log(e.currentTarget, "last capture once"), {
+    last: true,
+    capture: true,
+    once: true
+  });
+
+
+  h2.addEventListener("click", funkyBoy, {last: true});
+  h2.addEventListener("click", funkyBoy, {last: true, once: true, capture: true});
+  h2.removeEventListener("click", funkyBoy);
+  h2.removeEventListener("click", funkyBoy, {capture: true});
+
+  h3.addEventListener("click", e => console.log("h3 1"), {last: true});
+  h3.addEventListener("click", e => console.log("h3 2"), {last: true, capture: true});
+  try {
+    h3.addEventListener("click", function () {
+    }, {last: true});
+  } catch (error) {
+    console.log("correct error #1");
+  }
+  try {
+    h3.addEventListener("click", function () {
+    }, {last: true, capture: true});
+  } catch (error) {
+    console.log("correct error #2");
+  }
+
+  h3.removeEventListener("mousedown", funkyBoy);          //should produce no errors.
+
+  h1.dispatchEvent(new MouseEvent("click"));
+  h1.dispatchEvent(new MouseEvent("click"));
+  h2.dispatchEvent(new MouseEvent("click"));
+  h2.dispatchEvent(new MouseEvent("click"));
+  h3.dispatchEvent(new MouseEvent("click"));
+  h3.dispatchEvent(new MouseEvent("click"));
+
+</script>

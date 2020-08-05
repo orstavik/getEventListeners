@@ -1,0 +1,151 @@
+<script>
+
+  const addEventListenerOG = EventTarget.prototype.addEventListener;
+  const removeEventListenerOG = EventTarget.prototype.removeEventListener;
+  const stopPropOG = Event.prototype.stopPropagation;
+  const stopImmediateOG = Event.prototype.stopImmediatePropagation;
+
+  function resetSystem() {
+    EventTarget.prototype.addEventListener = addEventListenerOG;
+    EventTarget.prototype.removeEventListener = removeEventListenerOG;
+    Event.prototype.stopPropagation = stopPropOG;
+    Event.prototype.stopImmediatePropagation = stopImmediateOG;
+    window.getEventListeners = undefined;
+    window.isStopped = undefined;
+  }
+
+  function nextTick2(cb) {
+    let r;
+    const p = new Promise(function (resolve) {
+      r = resolve;
+    });
+    setTimeout(function () {
+      cb();
+      setTimeout(function () {
+        r();
+      })//todo i need setTimeout(..., 1) for this to work in ff?
+    }); //todo i need 1 for this to work in ff?
+    return p;
+  }
+
+  function setValue(obj, a, b, value) {
+    !obj[a] && (obj[a] = {});
+    !obj[a][b] && (obj[a][b] = {});
+    obj[a][b] = value;
+  }
+
+  function printResults(results) {
+    for (let [testName, testResults] of Object.entries(results)) {
+      const expected = testResults.expected;
+      delete testResults.expected;
+      const native = testResults.NATIVE;
+      for (let [systemName, result] of Object.entries(testResults)) {
+        if (systemName === "NATIVE")
+          testResults[systemName] = result === expected ? 1 : result;
+        else
+          testResults[systemName] =
+            (result === expected && result === native) ? null :
+              (result === expected) ? 1 :
+                (result === native) ? undefined :
+                  result;
+      }
+    }
+    console.table(results);
+  }
+
+  async function runTests(eventSystems, tests) {
+    const results = {};
+    for (let system of eventSystems) {
+      system();
+      for (const {name: testName, fun, expect} of tests) {
+
+        const expected = expect instanceof Function ? expect() : expect;
+        setValue(results, testName, "expected", expected);
+
+        let result = [];
+        fun(result);
+        await nextTick2(() => 1);  //just wait a t1ck, for any queued propagation to complete
+        setValue(results, testName, system.name, result.join(""));
+        await nextTick2(() => 1);  //just wait a t0ck, for any queued tasks of the propagation to complete
+      }
+      resetSystem();
+    }
+    return nextTick2(function () {
+      printResults(results);
+    });
+  }
+</script>
+
+<script type="module">
+  import {addEventTargetRegistry as addEventTargetRegistry1} from "../src/getEventListeners.js";
+  import {addEventTargetRegistry as addEventTargetRegistry2} from "../src/getEventListeners_once.js";
+  import {addEventTargetRegistry as addEventTargetRegistry3} from "../src/getEventListeners_once_last.js";
+  import {addEventTargetRegistry} from "../src/getEventListeners_once_last_first.js";
+  import {addEventListenerOptionScopedUnstoppable} from "../src/EventListenersOptionUnstoppableScoped.js";
+  import {addEventIsStoppedScoped} from "../src/ScopedStopPropagation.js";
+
+  /**
+   * @param byDefault, if true, then all events are isScoped=true by default/globally
+   */
+  function SCOPED_STOP(byDefault) {
+    const isStopped = addEventIsStoppedScoped(Event.prototype);
+    addEventListenerOptionScopedUnstoppable(EventTarget.prototype, isStopped);
+    byDefault && Object.defineProperty(Event.prototype, "isScoped", {value: true});
+  }
+
+  function REGISTER() {//once, last, first
+    window.getEventListeners = addEventTargetRegistry(EventTarget.prototype);
+  }
+
+  const registers = [
+    REGISTER,
+    function REGISTER_no_options() {
+      window.getEventListeners = addEventTargetRegistry1(EventTarget.prototype);
+    },
+    function REGISTER_once() {
+      window.getEventListeners = addEventTargetRegistry2(EventTarget.prototype);
+    },
+    function REGISTER_once_last() {
+      window.getEventListeners = addEventTargetRegistry3(EventTarget.prototype);
+    }];
+
+  const eventSystems = [
+    function NATIVE() {
+    },
+    REGISTER,
+    SCOPED_STOP,
+    function SCOPED_STOP_REGISTER() {
+      SCOPED_STOP();
+      REGISTER();
+    }];
+
+  import {testBasic} from "./unitTests/testBasic.js";
+  import {dynamicTest} from "./unitTests/testDynamic.js";
+  import {testRegistry} from "./unitTests/testRegistry.js";
+  import {testOnce} from "./unitTests/testOnce.js";
+  import {testUnstoppable, cancelBubbleTests} from "./unitTests/testUnstoppable.js";
+  import {lastTest, lastErrorsTest, last2} from "./unitTests/testLast.js";
+  import {firstTest, firstErrorsTest, first2} from "./unitTests/testFirst.js";
+  import {testStopProp, testStopProp2} from "./unitTests/testStopPropagation.js";
+  import {testIsStopped} from "./unitTests/testIsStopped.js";
+
+  (async function () {
+    await runTests(eventSystems, testBasic);
+    await runTests(eventSystems, dynamicTest);
+    await runTests(registers, testRegistry);
+    await runTests(eventSystems, testOnce);
+    await runTests(eventSystems, testUnstoppable);
+    await runTests(eventSystems, cancelBubbleTests);
+    await runTests(eventSystems, lastTest);
+    await runTests(eventSystems, last2);
+    await runTests(eventSystems, lastErrorsTest);
+    await runTests(eventSystems, firstTest);
+    await runTests(eventSystems, first2);
+    await runTests(eventSystems, firstErrorsTest);
+    await runTests(eventSystems, testStopProp);
+    await runTests(eventSystems, testStopProp2);
+    // // await runTests(eventSystems, testIsStopped);
+  })();
+  //todo
+  // 1. test stopPropagation thoroughly
+</script>

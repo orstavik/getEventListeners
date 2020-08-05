@@ -1,0 +1,43 @@
+<script>
+  const nonBubblingEvents = ["toggle", "load", "unload", "scroll", "blur", "focus", "DOMNodeRemovedFromDocument", "DOMNodeInsertedIntoDocument", "loadstart", "loadend", "progress", "abort", "error", "pointerenter", "pointerleave", "pointerleave", "rowexit", "beforeunload", "stop", "start", "finish", "bounce", "Miscellaneous", "afterprint", "propertychange", "filterchange", "readystatechange", "losecapture"];
+
+  //on the propagationRoot
+  //todo this is a naive implementation
+  //todo it will not tackle if the method is added with different onTarget options.
+  //todo instead, the nonBubblingEvents should be extended to include different type names, so that the method always finds this out itself.
+  const nonBubblingWrappers = new WeakMap();
+
+  function addGuaranteedBubbleListener(propagationRoot, eventname, fun, onTarget) {
+    if (nonBubblingEvents.indexOf(eventname) === -1 && !onTarget)
+      return propagationRoot.addEventListener(eventname, fun);
+    let onTargetWrapper = nonBubblingWrappers.get(fun);
+    if (!onTargetWrapper) {
+      onTargetWrapper = function (e) {
+        e.target.addEventListener(eventname, fun, {once: true});
+      };
+      nonBubblingWrappers.set(fun, onTargetWrapper);
+    }
+    return propagationRoot.addEventListener(eventname, onTargetWrapper, {capture: true});
+  }
+
+  function removeGuaranteedBubbleListener(propagationRoot, eventname, fun, onTarget) {
+    if (nonBubblingEvents.indexOf(eventname) === -1 && !onTarget)
+      return propagationRoot.removeEventListener(eventname, fun);
+    return propagationRoot.removeEventListener(eventname, nonBubblingWrappers.get(fun), {capture: true});
+  }
+</script>
+
+<div>
+  <h1>hello sunshine</h1>
+  <details>
+    <summary>hello</summary>
+    toggle
+  </details>
+</div>
+
+<script>
+  addGuaranteedBubbleListener(document, "click", e => console.log("normal", e.type, e.currentTarget, e.eventPhase));
+  addGuaranteedBubbleListener(document, "click", e => console.log("onTarget", e.type, e.currentTarget, e.eventPhase), true);
+  addGuaranteedBubbleListener(document, "toggle", e => console.log("normal", e.type, e.currentTarget, e.eventPhase));
+  addGuaranteedBubbleListener(document, "toggle", e => console.log("onTarget", e.type, e.currentTarget, e.eventPhase), true);
+</script>
