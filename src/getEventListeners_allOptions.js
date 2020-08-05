@@ -10,6 +10,9 @@ export function addGetEventListeners_allOptions(
   const isStopped = addEventIsStoppedScoped(eventPrototype);
   addEventListenerOptionScopedUnstoppable(eventTargetPrototype, isStopped);
   scopedByDefault && Object.defineProperty(eventPrototype, "isScoped", {value: true});
-  return addEventTargetRegistry(eventTargetPrototype);
+  return {
+    getEventListeners: addEventTargetRegistry(eventTargetPrototype),
+    isStopped: isStopped
+  };
 }
 
