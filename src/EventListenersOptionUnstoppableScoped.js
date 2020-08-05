@@ -32,7 +32,7 @@ function removeWrapper(target, type, options, cb) {
 
 //scoped event listeners will only obey stopPropagations called inside the same scope.
 //unstoppable event listeners will not obey any stopPropagations.
-export function addEventListenerOptionScopedUnstoppable(EventTargetPrototype, isStopped) {
+export function addEventListenerOptionScopedUnstoppable(EventTargetPrototype = EventTarget.prototype, isStopped) {
   const addEventListenerOG = EventTargetPrototype.addEventListener;
   const removeEventListenerOG = EventTargetPrototype.removeEventListener;
 

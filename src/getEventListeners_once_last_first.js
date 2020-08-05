@@ -105,12 +105,7 @@ function verifyFirstLast(target, options) {
     throw new Error("only one event listener {first: true} can be added to the same target and event type.");
 }
 
-/**
- *
- * @param EventTargetPrototype
- * @returns {getEventListeners} the function that can be used to retrieve the event listeners from the event listener registry
- */
-export function addEventTargetRegistry(EventTargetPrototype) {
+export function addEventTargetRegistry(EventTargetPrototype = EventTarget.prototype) {
   const ogAdd = EventTargetPrototype.addEventListener;
   const ogRemove = EventTargetPrototype.removeEventListener;
 

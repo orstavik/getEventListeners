@@ -72,7 +72,7 @@ function removeListener(target, type, listener, options) {
 const entryToOnceCb = new WeakMap();
 const dynamicallyRemovedEntries = new WeakSet();
 
-export function addEventTargetRegistry(EventTargetPrototype) {
+export function addEventTargetRegistry(EventTargetPrototype = EventTarget.prototype) {
   const ogAdd = EventTargetPrototype.addEventListener;
   const ogRemove = EventTargetPrototype.removeEventListener;
 

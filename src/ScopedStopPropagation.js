@@ -85,7 +85,7 @@ function isStopped(event, listenerIsScoped) {
  *
  * @param EventPrototype
  */
-export function addEventIsStoppedScoped(EventPrototype) {
+export function addEventIsStoppedScoped(EventPrototype = Event.prototype) {
   Object.defineProperty(EventPrototype, "stopPropagation", {
     value: function stopPropagation(scoped) {
       if (this.eventPhase === 0)
