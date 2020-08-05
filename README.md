@@ -77,5 +77,5 @@ scopedByDefault && Object.defineProperty(Event.prototype, "isScoped", {value: tr
 ```javascript
 import {addGetEventListeners_allOptions} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1.0.1/src/getEventListeners_allOptions.js";
 
-window.getEventListeners = addGetEventListeners_allOptions(true); //isScoped is set as default value for all event listeners
+const {getEventListeners, isStopped} = addGetEventListeners_allOptions(true); //isScoped is set as default value for all event listeners
 ```
