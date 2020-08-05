@@ -34,7 +34,7 @@ y. we need a discussion about the safety of the getEventListeners() method.
 The simple `getEventListener(eventTarget)` supports the native `once` event listener option. The ES6 `import` returns an `addEventTargetRegistry()` function that should be run before any event listeners are added to the DOM.  
 
 ```javascript
-import {addEventTargetRegistry} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1/src/getEventListeners_once.js";
+import {addEventTargetRegistry} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1.0.1/src/getEventListeners_once.js";
 
 window.getEventListeners = addEventTargetRegistry();
 ```
@@ -42,7 +42,7 @@ window.getEventListeners = addEventTargetRegistry();
 ### 2. `getEventListener(eventTarget)` polyfill with added support to `first` and `last` event listener options.
  
 ```javascript
-import {addEventTargetRegistry} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1/src/getEventListeners_once_last_first.js";
+import {addEventTargetRegistry} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1.0.1/src/getEventListeners_once_last_first.js";
 
 window.getEventListeners = addEventTargetRegistry();
 ```
@@ -52,7 +52,7 @@ window.getEventListeners = addEventTargetRegistry();
 Make `stopPropagation()` and `stopImmediatePropagation()` only apply to the current DOM context, to avoid shadowTorpedoes, captureTorpedoes, etc. Returns a method `isStopped(event)` that can check whether or not an event's propagation has been stopped.  
  
 ```javascript
-import {addEventIsStoppedScoped} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1/src/ScopedStopPropagation.js";
+import {addEventIsStoppedScoped} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1.0.1/src/ScopedStopPropagation.js";
 
 const isStopped = addEventIsStoppedScoped(Event.prototype);
 ```
@@ -62,8 +62,8 @@ const isStopped = addEventIsStoppedScoped(Event.prototype);
 This method require the scoped `stopPropagation()` #3.
  
 ```javascript
-import {addEventIsStoppedScoped} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1/src/ScopedStopPropagation.js";
-import {addEventListenerOptionScopedUnstoppable} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1/src/EventListenersOptionUnstoppableScoped.js";
+import {addEventIsStoppedScoped} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1.0.1/src/ScopedStopPropagation.js";
+import {addEventListenerOptionScopedUnstoppable} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1.0.1/src/EventListenersOptionUnstoppableScoped.js";
 
 const scopedByDefault = true;
   
@@ -75,7 +75,7 @@ scopedByDefault && Object.defineProperty(Event.prototype, "isScoped", {value: tr
 ### 5. Everything
 
 ```javascript
-import {addGetEventListeners_allOptions} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1/src/getEventListeners_allOptions.js";
+import {addGetEventListeners_allOptions} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1.0.1/src/getEventListeners_allOptions.js";
 
 window.getEventListeners = addGetEventListeners_allOptions(true); //isScoped is set as default value for all event listeners
 ```
