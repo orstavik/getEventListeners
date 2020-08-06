@@ -19,5 +19,5 @@ export function removeGetEventListeners_allOptions() {
   removeEventTargetRegistry();
   removeEventListenerOptionScopedUnstoppable()
   removeEventIsStoppedScoped();
-  delete Event.prototype.isScoped;
+  isScopedSettings ? Object.defineProperty(Event.prototype, "isScoped", isScopedSettings) : (Event.prototype.isScoped = undefined);
 }

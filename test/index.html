@@ -1,19 +1,5 @@
 <script>
 
-  const addEventListenerOG = EventTarget.prototype.addEventListener;
-  const removeEventListenerOG = EventTarget.prototype.removeEventListener;
-  const stopPropOG = Event.prototype.stopPropagation;
-  const stopImmediateOG = Event.prototype.stopImmediatePropagation;
-
-  function resetSystem() {
-    EventTarget.prototype.addEventListener = addEventListenerOG;
-    EventTarget.prototype.removeEventListener = removeEventListenerOG;
-    Event.prototype.stopPropagation = stopPropOG;
-    Event.prototype.stopImmediatePropagation = stopImmediateOG;
-    window.getEventListeners = undefined;
-    window.isStopped = undefined;
-  }
-
   function nextTick2(cb) {
     let r;
     const p = new Promise(function (resolve) {
