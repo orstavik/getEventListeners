@@ -63,11 +63,9 @@ let cancelBubbleOG;
  * When .stopPropagation(true) or .stopImmediatePropagation(true)is called, then
  * the propagation should only be blocked for event listeners in the same DOM context
  * that the event currently propagates.
+ * //todo we want this to apply by default.. so that all stopPropagation() calls are scoped..
  *
- * addEventIsStoppedScoped can be applied to:
- *  1. the Event.prototype,
- *  2. the prototype of a specific event type(class), or
- *  3. a specific event object.
+ * addEventIsStoppedScoped is applied to the Event.prototype,
  *
  * cancelBubble mostly echoes the native `stopPropagation()`.
  * event.cancelBubble = false    ===     event.stopPropagation(false)
@@ -125,6 +123,10 @@ export function addEventIsStoppedScoped() {
       }, set: function (value) {
         return value && this.stopPropagation();
       }
+    },
+    "isScoped": {
+      value: true,
+      configurable: true
     }
   });
 
@@ -137,4 +139,5 @@ export function removeEventIsStoppedScoped(){
     "stopImmediatePropagation": stopImmediatePropagationOG,
     "cancelBubble": cancelBubbleOG
   });
+  delete Event.prototype.isScoped;
 }

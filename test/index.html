@@ -108,8 +108,6 @@
     window.getEventListeners = addEventTargetRegistry3();
   }
 
-  const isScopedOG = Object.getOwnPropertyDescriptor(Event.prototype, "isScoped");
-
   function SCOPED_STOP(byDefault) {
     const isStopped = addEventIsStoppedScoped();
     addEventListenerOptionScopedUnstoppable(isStopped);
@@ -117,12 +115,11 @@
   }
 
   function REMOVE_SCOPED_STOP() {
-    delete Event.prototype.isScoped;
+    Object.defineProperty(Event.prototype, "isScoped", {value: undefined});
     removeEventListenerOptionScopedUnstoppable();
     removeEventIsStoppedScoped();
   }
 
-  //todo _allOptions
   function SCOPED_STOP_REGISTER() {
     window.getEventListeners = addGetEventListeners_allOptions();
   }

@@ -39,43 +39,12 @@ import {addEventTargetRegistry} from "https://cdn.jsdelivr.net/gh/orstavik/getEv
 window.getEventListeners = addEventTargetRegistry();
 ```
 
-### 2. `getEventListener(eventTarget)` polyfill with added support to `first` and `last` event listener options.
+### 2. `last`, `first`, `unstoppable`, scoped `stopPropagation()` and `getEventListener(eventTarget)` polyfill
+
+To enable full development of web components that act like native web components you MUST have something like this.
  
 ```javascript
-import {addEventTargetRegistry} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1.0.1/src/getEventListeners_once_last_first.js";
+import {addGetEventListeners_allOptions} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1.1.2/src/getEventListeners_allOptions.js";
 
-window.getEventListeners = addEventTargetRegistry();
-```
-
-### 3. scoped `.stopPropagation()`
-
-Make `stopPropagation()` and `stopImmediatePropagation()` only apply to the current DOM context, to avoid shadowTorpedoes, captureTorpedoes, etc. Returns a method `isStopped(event)` that can check whether or not an event's propagation has been stopped.  
- 
-```javascript
-import {addEventIsStoppedScoped} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1.0.1/src/ScopedStopPropagation.js";
-
-const isStopped = addEventIsStoppedScoped(Event.prototype);
-```
-
-### 4. `unstoppable` and `isScoped` event listener options
-
-This method require the scoped `stopPropagation()` #3.
- 
-```javascript
-import {addEventIsStoppedScoped} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1.0.1/src/ScopedStopPropagation.js";
-import {addEventListenerOptionScopedUnstoppable} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1.0.1/src/EventListenersOptionUnstoppableScoped.js";
-
-const scopedByDefault = true;
-  
-const isStopped = addEventIsStoppedScoped(Event.prototype);
-addEventListenerOptionScopedUnstoppable(EventTarget.prototype, isStopped);
-scopedByDefault && Object.defineProperty(Event.prototype, "isScoped", {value: true});
-```
-
-### 5. Everything
-
-```javascript
-import {addGetEventListeners_allOptions} from "https://cdn.jsdelivr.net/gh/orstavik/getEventListeners@1.0.1/src/getEventListeners_allOptions.js";
-
-const {getEventListeners, isStopped} = addGetEventListeners_allOptions(true); //isScoped is set as default value for all event listeners
+const {getEventListeners, isStopped} = addGetEventListeners_allOptions();
 ```

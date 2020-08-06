@@ -165,7 +165,7 @@ export const testStopProp2 = [{
       res.push("SameScope");
     });
     const event = new Event("click", {composed: true, bubbles: true});
-    event.isScoped = true;
+    // event.isScoped = true;           is always true
     dom.shadowH1.dispatchEvent(event);
   },
   expect: "DifferentScope",

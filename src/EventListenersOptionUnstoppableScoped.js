@@ -1,3 +1,5 @@
+import {addEventIsStoppedScoped, removeEventIsStoppedScoped} from "../src/ScopedStopPropagation.js";
+
 //target* => cb* => type+" "+capture => cbOnce
 const targetCbWrappers = new WeakMap();
 
@@ -34,9 +36,11 @@ let addEventListenerOG;
 let removeEventListenerOG;
 //scoped event listeners will only obey stopPropagations called inside the same scope.
 //unstoppable event listeners will not obey any stopPropagations.
-export function addEventListenerOptionScopedUnstoppable(isStopped) {
+export function addEventListenerOptionScopedUnstoppable() {
   addEventListenerOG = EventTarget.prototype.addEventListener;
   removeEventListenerOG = EventTarget.prototype.removeEventListener;
+
+  const isStopped = addEventIsStoppedScoped();
 
   function addEventListenerUnstoppable(type, cb, options) {
     if (hasWrapper(this, type, cb, options))
@@ -68,6 +72,7 @@ export function addEventListenerOptionScopedUnstoppable(isStopped) {
     addEventListener: {value: addEventListenerUnstoppable},
     removeEventListener: {value: removeEventListenerUnstoppable}
   });
+  return isStopped;
 }
 
 export function removeEventListenerOptionScopedUnstoppable(){
@@ -75,4 +80,5 @@ export function removeEventListenerOptionScopedUnstoppable(){
     addEventListener: {value: addEventListenerOG},
     removeEventListener: {value: removeEventListenerOG}
   });
+  removeEventIsStoppedScoped();
 }
