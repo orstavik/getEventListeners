@@ -55,7 +55,7 @@
 
   async function runTests(eventSystems, tests) {
     const results = {};
-    for (let system of eventSystems) {
+    for (let [system, reset] of eventSystems) {
       system();
       for (const {name: testName, fun, expect} of tests) {
 
@@ -68,7 +68,7 @@
         setValue(results, testName, system.name, result.join(""));
         await nextTick2(() => 1);  //just wait a t0ck, for any queued tasks of the propagation to complete
       }
-      resetSystem();
+      reset();
     }
     return nextTick2(function () {
       printResults(results);
@@ -77,47 +77,83 @@
 </script>
 
 <script type="module">
-  import {addEventTargetRegistry as addEventTargetRegistry1} from "../src/getEventListeners.js";
-  import {addEventTargetRegistry as addEventTargetRegistry2} from "../src/getEventListeners_once.js";
-  import {addEventTargetRegistry as addEventTargetRegistry3} from "../src/getEventListeners_once_last.js";
-  import {addEventTargetRegistry} from "../src/getEventListeners_once_last_first.js";
-  import {addEventListenerOptionScopedUnstoppable} from "../src/EventListenersOptionUnstoppableScoped.js";
-  import {addEventIsStoppedScoped} from "../src/ScopedStopPropagation.js";
+  import {
+    addEventTargetRegistry as addEventTargetRegistry1,
+    removeEventTargetRegistry as removeEventTargetRegistry1
+  } from "../src/getEventListeners.js";
+  import {
+    addEventTargetRegistry as addEventTargetRegistry2,
+    removeEventTargetRegistry as removeEventTargetRegistry2
+  } from "../src/getEventListeners_once.js";
+  import {
+    addEventTargetRegistry as addEventTargetRegistry3,
+    removeEventTargetRegistry as removeEventTargetRegistry3
+  } from "../src/getEventListeners_once_last.js";
+  import {addEventTargetRegistry, removeEventTargetRegistry} from "../src/getEventListeners_once_last_first.js";
+  import {
+    addEventListenerOptionScopedUnstoppable,
+    removeEventListenerOptionScopedUnstoppable
+  } from "../src/EventListenersOptionUnstoppableScoped.js";
+  import {addEventIsStoppedScoped, removeEventIsStoppedScoped} from "../src/ScopedStopPropagation.js";
+  import {
+    addGetEventListeners_allOptions,
+    removeGetEventListeners_allOptions
+  } from "../src/getEventListeners_allOptions.js"
 
   /**
    * @param byDefault, if true, then all events are isScoped=true by default/globally
    */
+  function NATIVE() {
+  }
+
+  function REGISTER_once_last_first() {//once, last, first
+    window.getEventListeners = addEventTargetRegistry();
+  }
+
+  function REGISTER_no_options() {
+    window.getEventListeners = addEventTargetRegistry1();
+  }
+
+  function REGISTER_once() {
+    window.getEventListeners = addEventTargetRegistry2();
+  }
+
+  function REGISTER_once_last() {
+    window.getEventListeners = addEventTargetRegistry3();
+  }
+
+  const isScopedOG = Object.getOwnPropertyDescriptor(Event.prototype, "isScoped");
+
   function SCOPED_STOP(byDefault) {
-    const isStopped = addEventIsStoppedScoped(Event.prototype);
-    addEventListenerOptionScopedUnstoppable(EventTarget.prototype, isStopped);
+    const isStopped = addEventIsStoppedScoped();
+    addEventListenerOptionScopedUnstoppable(isStopped);
     byDefault && Object.defineProperty(Event.prototype, "isScoped", {value: true});
   }
 
-  function REGISTER() {//once, last, first
-    window.getEventListeners = addEventTargetRegistry(EventTarget.prototype);
+  function REMOVE_SCOPED_STOP() {
+    delete Event.prototype.isScoped;
+    removeEventListenerOptionScopedUnstoppable();
+    removeEventIsStoppedScoped();
+  }
+
+  //todo _allOptions
+  function SCOPED_STOP_REGISTER() {
+    window.getEventListeners = addGetEventListeners_allOptions();
   }
 
   const registers = [
-    REGISTER,
-    function REGISTER_no_options() {
-      window.getEventListeners = addEventTargetRegistry1(EventTarget.prototype);
-    },
-    function REGISTER_once() {
-      window.getEventListeners = addEventTargetRegistry2(EventTarget.prototype);
-    },
-    function REGISTER_once_last() {
-      window.getEventListeners = addEventTargetRegistry3(EventTarget.prototype);
-    }];
+    [REGISTER_once_last_first, removeEventTargetRegistry],
+    [REGISTER_no_options, removeEventTargetRegistry1],
+    [REGISTER_once, removeEventTargetRegistry2],
+    [REGISTER_once_last, removeEventTargetRegistry3]
+  ];
 
   const eventSystems = [
-    function NATIVE() {
-    },
-    REGISTER,
-    SCOPED_STOP,
-    function SCOPED_STOP_REGISTER() {
-      SCOPED_STOP();
-      REGISTER();
-    }];
+    [NATIVE, NATIVE],
+    [REGISTER_once_last_first, removeEventTargetRegistry],
+    [SCOPED_STOP, REMOVE_SCOPED_STOP],
+    [SCOPED_STOP_REGISTER, removeGetEventListeners_allOptions]
+  ];
 
   import {testBasic} from "./unitTests/testBasic.js";
   import {dynamicTest} from "./unitTests/testDynamic.js";

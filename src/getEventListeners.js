@@ -71,9 +71,12 @@ function removeListener(target, type, listener, options) {
 
 const dynamicallyRemovedEntries = new WeakSet();
 
-export function addEventTargetRegistry(EventTargetPrototype = EventTarget.prototype) {
-  const ogAdd = EventTargetPrototype.addEventListener;
-  const ogRemove = EventTargetPrototype.removeEventListener;
+let ogAdd;
+let ogRemove;
+
+export function addEventTargetRegistry() {
+  ogAdd = EventTarget.prototype.addEventListener;
+  ogRemove = EventTarget.prototype.removeEventListener;
 
   function addEntry(entry) {
     ogAdd.call(entry.target, entry.type, entry.listener, entry);
@@ -100,8 +103,13 @@ export function addEventTargetRegistry(EventTargetPrototype = EventTarget.protot
     removeEntry(entry);
   }
 
-  Object.defineProperty(EventTargetPrototype, "addEventListener", {value: addEventListenerRegistry});
-  Object.defineProperty(EventTargetPrototype, "removeEventListener", {value: removeEventListenerRegistry});
+  Object.defineProperty(EventTarget.prototype, "addEventListener", {value: addEventListenerRegistry});
+  Object.defineProperty(EventTarget.prototype, "removeEventListener", {value: removeEventListenerRegistry});
 
   return getEventListeners;
+}
+
+export function removeEventTargetRegistry(){
+  Object.defineProperty(EventTarget.prototype, "addEventListener", {value: ogAdd});
+  Object.defineProperty(EventTarget.prototype, "removeEventListener", {value: ogRemove});
 }

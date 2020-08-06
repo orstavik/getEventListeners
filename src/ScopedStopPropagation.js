@@ -54,6 +54,10 @@ function isStopped(event, listenerIsScoped) {
   return !!stopListener(event, localStops.get(event)?.get(scope));
 }
 
+let stopPropagationOG;
+let stopImmediatePropagationOG;
+let cancelBubbleOG;
+
 /**
  * Adds a boolean option "scoped" to stopPropagation(), stopImmediatePropagation().
  * When .stopPropagation(true) or .stopImmediatePropagation(true)is called, then
@@ -61,7 +65,7 @@ function isStopped(event, listenerIsScoped) {
  * that the event currently propagates.
  *
  * addEventIsStoppedScoped can be applied to:
- *  1. the EventPrototype,
+ *  1. the Event.prototype,
  *  2. the prototype of a specific event type(class), or
  *  3. a specific event object.
  *
@@ -82,44 +86,55 @@ function isStopped(event, listenerIsScoped) {
  *  propagation in your current DOM context.
  *  When more advanced event listeners are added that are either {scoped: true} or {unstoppable: true}, that safely
  *  allow web components to generate custom default actions, then a global propagation state simply cease to exists.
- *
- * @param EventPrototype
  */
-export function addEventIsStoppedScoped(EventPrototype = Event.prototype) {
-  Object.defineProperty(EventPrototype, "stopPropagation", {
-    value: function stopPropagation(scoped) {
-      if (this.eventPhase === 0)
-        return beforeStops.add(this);
-      const value = {currentTarget: this.currentTarget, eventPhase: this.eventPhase};
-      if (!scoped)
-        !globalStops.has(this) && globalStops.set(this, value);
-      const context = currentEventContext(this);
-      let scopeMap = localStops.get(this);
-      if (!scopeMap)
-        return localStops.set(this, new WeakMap([[context, value]]));
-      return !scopeMap.has(context) && scopeMap.set(context, value);
-    }
-  });
-  Object.defineProperty(EventPrototype, "stopImmediatePropagation", {
-    value: function stopImmediatePropagation(scoped) {
-      if (this.eventPhase === 0)
-        return beforeStops.add(this);
-      if (!scoped)
-        globalStops.set(this, true);
-      const context = currentEventContext(this);
-      let scopeMap = localStops.get(this);
-      if (!scopeMap)
-        localStops.set(this, scopeMap = new WeakMap());
-      return scopeMap.set(context, true);
-    }
-  });
-  Object.defineProperty(EventPrototype, "cancelBubble", {
-    get: function () {
-      return globalStops.has(this);
-    }, set: function (value) {
-      return value && this.stopPropagation();
+export function addEventIsStoppedScoped() {
+  stopPropagationOG = Object.getOwnPropertyDescriptor(Event.prototype, "stopPropagation");
+  stopImmediatePropagationOG = Object.getOwnPropertyDescriptor(Event.prototype, "stopImmediatePropagation");
+  cancelBubbleOG = Object.getOwnPropertyDescriptor(Event.prototype, "cancelBubble");
+  Object.defineProperties(Event.prototype, {
+    "stopPropagation": {
+      value: function stopPropagation(scoped) {
+        if (this.eventPhase === 0)
+          return beforeStops.add(this);
+        const value = {currentTarget: this.currentTarget, eventPhase: this.eventPhase};
+        if (!scoped)
+          !globalStops.has(this) && globalStops.set(this, value);
+        const context = currentEventContext(this);
+        let scopeMap = localStops.get(this);
+        if (!scopeMap)
+          return localStops.set(this, new WeakMap([[context, value]]));
+        return !scopeMap.has(context) && scopeMap.set(context, value);
+      }
+    },
+    "stopImmediatePropagation": {
+      value: function stopImmediatePropagation(scoped) {
+        if (this.eventPhase === 0)
+          return beforeStops.add(this);
+        if (!scoped)
+          globalStops.set(this, true);
+        const context = currentEventContext(this);
+        let scopeMap = localStops.get(this);
+        if (!scopeMap)
+          localStops.set(this, scopeMap = new WeakMap());
+        return scopeMap.set(context, true);
+      }
+    },
+    "cancelBubble": {
+      get: function () {
+        return globalStops.has(this);
+      }, set: function (value) {
+        return value && this.stopPropagation();
+      }
     }
   });
 
   return isStopped;
+}
+
+export function removeEventIsStoppedScoped(){
+  Object.defineProperties(Event.prototype, {
+    "stopPropagation": stopPropagationOG,
+    "stopImmediatePropagation": stopImmediatePropagationOG,
+    "cancelBubble": cancelBubbleOG
+  });
 }
