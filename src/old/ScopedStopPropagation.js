@@ -13,8 +13,33 @@
 export function currentEventContext(event) {//todo rename to getPropagationRootNode(event)?? //todo move to computePaths.js??
   if (!event.currentTarget)
     return null;
+  const two = currentEventContext2(event);
   const root = event.currentTarget.getRootNode ? event.currentTarget.getRootNode() : event.currentTarget;
-  return root === document ? window : root;
+  let one = root === document ? window : root;
+  if (two !== one)
+    debugger
+  return one;
+}
+ 
+export function currentEventContext2(event) {//todo rename to getPropagationRootNode(event)?? //todo move to computePaths.js??
+  if (!event.currentTarget)
+    return null;
+  const path = event.composedPath();
+  let root = event.currentTarget;
+
+  let i = path.indexOf(root) + 1;
+  let slots = 0;
+  while (i < path.length){
+    if (root instanceof HTMLSlotElement){
+      slots++;
+    } else if(root instanceof ShadowRoot){
+      if (slots === 0)
+        return root;
+      slots--;
+    }
+    root = path[i++];
+  }
+  return root;
 }
 
 //whenStopPropWasCalled:
@@ -37,7 +62,7 @@ function stopListener(e, stop) {
  * it can be set to true on the Event.prototype to force all events to be isScoped by default.
  *
  * @param event whose propagation is to be checked if it has been stopped.
- * @param listenerIsScoped if true, then only check if the propagation has been stopped in the current DOM context.
+ * @param listenerIsScoped if true, then only check if the propagation has been stopped in the current DOM context. todo always true now
  * @returns {boolean} true if somebody has called stopPropagation on it before the event has begun propagaton,
  *                    true if the event is stopped in this current DOM context, and if a previous event listener
  *                         on the same target node has called stopImmediatePropagation, and
@@ -46,10 +71,11 @@ function stopListener(e, stop) {
  *                         in the main dom outside a web component that the event currently propagates in.
  */
 function isStopped(event, listenerIsScoped) {
+  listenerIsScoped = true;
   if (beforeStops.has(event))
     return true;
-  if (!listenerIsScoped && !event.isScoped && stopListener(event, globalStops.get(event)))  //check if it is non-scoped first, as that is cheapest
-    return true;
+  // if (!true && !event.isScoped && stopListener(event, globalStops.get(event)))  //check if it is non-scoped first, as that is cheapest
+  //   return true;
   const scope = currentEventContext(event);                    //check if stopped in current context. Applies to all.
   return !!stopListener(event, localStops.get(event)?.get(scope));
 }
@@ -133,7 +159,7 @@ export function addEventIsStoppedScoped() {
   return isStopped;
 }
 
-export function removeEventIsStoppedScoped(){
+export function removeEventIsStoppedScoped() {
   Object.defineProperties(Event.prototype, {
     "stopPropagation": stopPropagationOG,
     "stopImmediatePropagation": stopImmediatePropagationOG,

@@ -63,108 +63,42 @@
 </script>
 
 <script type="module">
-  import {
-    addEventTargetRegistry as addEventTargetRegistry1,
-    removeEventTargetRegistry as removeEventTargetRegistry1
-  } from "../src/getEventListeners.js";
-  import {
-    addEventTargetRegistry as addEventTargetRegistry2,
-    removeEventTargetRegistry as removeEventTargetRegistry2
-  } from "../src/getEventListeners_once.js";
-  import {
-    addEventTargetRegistry as addEventTargetRegistry3,
-    removeEventTargetRegistry as removeEventTargetRegistry3
-  } from "../src/getEventListeners_once_last.js";
-  import {addEventTargetRegistry, removeEventTargetRegistry} from "../src/getEventListeners_once_last_first.js";
-  import {
-    addEventListenerOptionScopedUnstoppable,
-    removeEventListenerOptionScopedUnstoppable
-  } from "../src/EventListenersOptionUnstoppableScoped.js";
-  import {addEventIsStoppedScoped, removeEventIsStoppedScoped} from "../src/ScopedStopPropagation.js";
-  import {
-    addGetEventListeners_allOptions,
-    removeGetEventListeners_allOptions
-  } from "../src/getEventListeners_allOptions.js"
+  import {upgradeAddEventListener, downgradeAddEventListener} from "../src/runEventListener.js"
 
-  /**
-   * @param byDefault, if true, then all events are isScoped=true by default/globally
-   */
   function NATIVE() {
   }
 
-  function REGISTER_once_last_first() {//once, last, first
-    window.getEventListeners = addEventTargetRegistry();
+  function REGISTER() {
+    window.customGetEventListeners = upgradeAddEventListener().getEventListeners;
   }
 
-  function REGISTER_no_options() {
-    window.getEventListeners = addEventTargetRegistry1();
+  function REGISTER_off() {
+    downgradeAddEventListener();
+    delete window.customGetEventListeners;
   }
-
-  function REGISTER_once() {
-    window.getEventListeners = addEventTargetRegistry2();
-  }
-
-  function REGISTER_once_last() {
-    window.getEventListeners = addEventTargetRegistry3();
-  }
-
-  function SCOPED_STOP(byDefault) {
-    const isStopped = addEventIsStoppedScoped();
-    addEventListenerOptionScopedUnstoppable(isStopped);
-    byDefault && Object.defineProperty(Event.prototype, "isScoped", {value: true});
-  }
-
-  function REMOVE_SCOPED_STOP() {
-    Object.defineProperty(Event.prototype, "isScoped", {value: undefined});
-    removeEventListenerOptionScopedUnstoppable();
-    removeEventIsStoppedScoped();
-  }
-
-  function SCOPED_STOP_REGISTER() {
-    window.getEventListeners = addGetEventListeners_allOptions();
-  }
-
-  const registers = [
-    [REGISTER_once_last_first, removeEventTargetRegistry],
-    [REGISTER_no_options, removeEventTargetRegistry1],
-    [REGISTER_once, removeEventTargetRegistry2],
-    [REGISTER_once_last, removeEventTargetRegistry3]
-  ];
 
   const eventSystems = [
     [NATIVE, NATIVE],
-    [REGISTER_once_last_first, removeEventTargetRegistry],
-    [SCOPED_STOP, REMOVE_SCOPED_STOP],
-    [SCOPED_STOP_REGISTER, removeGetEventListeners_allOptions]
+    [REGISTER, REGISTER_off]
   ];
 
-  import {testBasic} from "./unitTests/testBasic.js";
-  import {dynamicTest} from "./unitTests/testDynamic.js";
-  import {testRegistry} from "./unitTests/testRegistry.js";
-  import {testOnce} from "./unitTests/testOnce.js";
-  import {testUnstoppable, cancelBubbleTests} from "./unitTests/testUnstoppable.js";
-  import {lastTest, lastErrorsTest, last2} from "./unitTests/testLast.js";
-  import {firstTest, firstErrorsTest, first2} from "./unitTests/testFirst.js";
-  import {testStopProp, testStopProp2} from "./unitTests/testStopPropagation.js";
-  import {testIsStopped} from "./unitTests/testIsStopped.js";
+  import {testBasic} from "./testBasic.js";
+  import {dynamicTest} from "./testDynamic.js";
+  import {testRegistry} from "./testRegistry.js";
+  import {testOnce} from "./testOnce.js";
+  import {lastTest,  last2} from "./testLast.js";
+  import {firstTest, first2} from "./testFirst.js";
+  import {errorsTest} from "./testErrors.js";
 
   (async function () {
     await runTests(eventSystems, testBasic);
     await runTests(eventSystems, dynamicTest);
-    await runTests(registers, testRegistry);
+    await runTests([[REGISTER, REGISTER_off]], testRegistry);
     await runTests(eventSystems, testOnce);
-    await runTests(eventSystems, testUnstoppable);
-    await runTests(eventSystems, cancelBubbleTests);
     await runTests(eventSystems, lastTest);
     await runTests(eventSystems, last2);
-    await runTests(eventSystems, lastErrorsTest);
     await runTests(eventSystems, firstTest);
     await runTests(eventSystems, first2);
-    await runTests(eventSystems, firstErrorsTest);
-    await runTests(eventSystems, testStopProp);
-    await runTests(eventSystems, testStopProp2);
-    // // await runTests(eventSystems, testIsStopped);
+    await runTests(eventSystems, errorsTest);
   })();
-  //todo
-  // 1. test stopPropagation thoroughly
 </script>

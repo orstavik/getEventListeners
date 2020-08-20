@@ -1,4 +1,4 @@
-import {addEventIsStoppedScoped, removeEventIsStoppedScoped} from "../src/ScopedStopPropagation.js";
+import {addEventIsStoppedScoped, removeEventIsStoppedScoped} from "./ScopedStopPropagation.js";
 
 //target* => cb* => type+" "+capture => cbOnce
 const targetCbWrappers = new WeakMap();

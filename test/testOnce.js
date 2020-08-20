@@ -1,27 +1,8 @@
 import {cleanDom} from "./useCase1.js";
 
-// let res;
-
-function a(e) {
-  res.push("a");
-}
-
-function b(e) {
-  res.push("b");
-}
-
-function c(e) {
-  res.push("c");
-}
-
-function getResult() {
-  return res;
-}
-
 export const testOnce = [{
   name: "once: true",
-  fun: function(res) {
-    //res = "";
+  fun: function (res) {
     function a(e) {
       res.push("a");
     }
@@ -32,12 +13,10 @@ export const testOnce = [{
     h1.dispatchEvent(new Event("click"));
     h1.dispatchEvent(new Event("click", {bubbles: true, composed: true}));
   },
-  expect: "a",
-  result: getResult
+  expect: "a"
 }, {
   name: "once: false",
-  fun: function(res) {
-    //res = "";
+  fun: function (res) {
     function a(e) {
       res.push("a");
     }
@@ -48,12 +27,10 @@ export const testOnce = [{
     h1.dispatchEvent(new Event("click"));
     h1.dispatchEvent(new Event("click", {bubbles: true, composed: true}));
   },
-  expect: "aaa",
-  result: getResult
+  expect: "aaa"
 }, {
   name: "once: adding same listener object to the same target",
-  fun: function(res) {
-    //res = "";
+  fun: function (res) {
     function a(e) {
       res.push("a");
     }
@@ -75,12 +52,10 @@ export const testOnce = [{
     h1.dispatchEvent(new Event("click", {bubbles: true}));
     h1.dispatchEvent(new Event("click"));
   },
-  expect: "aab",
-  result: getResult
+  expect: "aab"
 }, {
   name: "once: removeEventListener twice",
-  fun: function(res) {
-    //res = "";
+  fun: function (res) {
     function a(e) {
       res.push("a");
     }
@@ -92,12 +67,10 @@ export const testOnce = [{
     h1.removeEventListener("click", a, {once: true});
     h1.dispatchEvent(new Event("click", {bubbles: true}));
   },
-  expect: "",
-  result: getResult
+  expect: ""
 }, {
   name: "once: two multiple listeners to the same target, not once added first",
-  fun: function(res) {
-    //res = "";
+  fun: function (res) {
     function a(e) {
       res.push("a");
     }
@@ -115,12 +88,10 @@ export const testOnce = [{
     h1.dispatchEvent(new Event("click", {bubbles: true}));
     h1.dispatchEvent(new Event("click", {bubbles: true}));
   },
-  expect: "ababab",
-  result: getResult
+  expect: "ababab"
 }, {
   name: "once: {capture:true, once: true}",
-  fun: function(res) {
-    //res = "";
+  fun: function (res) {
     function a(e) {
       res.push("a");
     }
@@ -142,12 +113,10 @@ export const testOnce = [{
     h1.dispatchEvent(new Event("click", {bubbles: true}));
     h1.dispatchEvent(new Event("click", {bubbles: true}));
   },
-  expect: "abcaa",  //c is after ab, because the h1 is in the lowestmost AT_TARGET phase
-  result: getResult
+  expect: "abcaa"  //c is after ab, because the h1 is in the lowestmost AT_TARGET phase
 }, {
   name: "once: slotted element",          //todo move these last two tests to the test of propagation
-  fun: function(res) {
-    //res = "";
+  fun: function (res) {
     function a(e) {
       res.push("a");
     }
@@ -163,13 +132,27 @@ export const testOnce = [{
     dom.shadowComp.dispatchEvent(new Event("click", {bubbles: true}));
     dom.shadowComp.dispatchEvent(new Event("click", {bubbles: true}));
   },
-  expect: "abbb",
-  result: getResult
+  expect: "abbb"
+}, {
+  name: "once: click dispatched within click",
+  fun: function (res) {
+    const h1 = document.createElement("h1");
+
+    function a(e) {
+      res.push("a");
+      e.target.click();
+    }
+
+    h1.addEventListener("click", a, {once: true});
+    h1.dispatchEvent(new Event("click", {bubbles: true}));
+  },
+  expect: "a",
+
 }, {
   name: "once: composed: false does not propagates through shadowRoot",
-  fun: function(res) {
-    //res = "";
+  fun: function (res) {
     const dom = cleanDom(true);
+
     function a(e) {
       res.push("a");
     }
@@ -183,6 +166,5 @@ export const testOnce = [{
     dom.shadowH1.dispatchEvent(new Event("click", {bubbles: true}));
     dom.shadowH1.dispatchEvent(new Event("click", {bubbles: true}));
   },
-  expect: "a",
-  result: getResult
+  expect: "a"
 }];
